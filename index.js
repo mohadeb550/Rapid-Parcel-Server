@@ -11,7 +11,7 @@ const cookieParser = require('cookie-parser');
 // use middleWare 
 
 app.use(cors({
-  origin:[''],
+  origin:['http://localhost:5173'],
   credentials: true
 }));
 app.use(express.json())
@@ -41,7 +41,19 @@ async function run() {
   try {
     // await client.connect();
 
+  const usersCollection = client.db('rapidParcel').collection('users');
 
+    // save userInfo 
+    app.post('/users', async (req, res) => {
+      const userInfo = req.body;
+
+      const isExist = await usersCollection.findOne({ email: userInfo.email});
+      if(isExist){
+        return res.send({ message: 'Exist'})
+      }
+      const result = await usersCollection.insertOne(userInfo);
+      res.send(result)
+    })
 
     
     // Send a ping to confirm a successful connection
