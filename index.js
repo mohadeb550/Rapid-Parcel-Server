@@ -42,6 +42,7 @@ async function run() {
     // await client.connect();
 
   const usersCollection = client.db('rapidParcel').collection('users');
+  const parcelCollection = client.db('rapidParcel').collection('parcels');
 
     // save userInfo 
     app.post('/users', async (req, res) => {
@@ -53,6 +54,21 @@ async function run() {
       }
       const result = await usersCollection.insertOne(userInfo);
       res.send(result)
+    })
+
+    // check user role and send 
+    app.get('/user-role/:email', async (req, res) => {
+      const userEmail = req.params.email;
+
+      const result = await usersCollection.findOne({ email: userEmail});
+      res.send({ role: result?.role})
+    })
+
+    // insert single booking percel 
+    app.post('/booking', async (req, res) => {
+      const newParcel = req.body;
+      const result = await parcelCollection.insertOne(newParcel);
+      res.send(result);
     })
 
     
