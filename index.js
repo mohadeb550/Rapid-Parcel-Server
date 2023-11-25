@@ -71,7 +71,35 @@ async function run() {
       res.send(result);
     })
 
-    
+    // get all parcels based on user email 
+    app.get('/my-parcels', async (req, res) => {
+      const userEmail = req.query.email;
+      const result = await parcelCollection.find({ email: userEmail}).toArray();
+      res.send(result)
+    })
+
+    // get a single percel data 
+    app.get('/parcel/:id', async (req, res) => {
+      const parcelId = req.params.id;
+      const result = await parcelCollection.findOne({ _id : new ObjectId(parcelId)});
+      res.send(result)
+    })
+
+    // update a single percel data 
+    app.put('/update/:id', async (req, res) => {
+      const parcelId = req.params.id;
+      const changes = req.body;
+      const query = { _id : new ObjectId(parcelId)}
+
+      const updatedDoc = {
+        $set : {
+          ...changes
+        }
+      }
+      const result = await parcelCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
