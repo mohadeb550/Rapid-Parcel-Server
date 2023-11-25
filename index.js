@@ -56,6 +56,26 @@ async function run() {
       res.send(result)
     })
 
+    // get a single user info 
+    app.get('/users/:email', async (req, res) => {
+      const userEmail = req.params.email;
+      const result = await usersCollection.findOne({ email: userEmail});
+      res.send(result)
+    })
+
+    // update single user info 
+    app.patch('/users/:email', async (req, res) => {
+      const userEmail = req.params.id;
+      const changes = req.body;
+      const query = { email : userEmail}
+
+      const updatedDoc = {
+        $set : {...changes }
+      }
+      const result = await usersCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    })
+
     // check user role and send 
     app.get('/user-role/:email', async (req, res) => {
       const userEmail = req.params.email;
@@ -71,10 +91,29 @@ async function run() {
       res.send(result);
     })
 
+    // get all parcels for admin 
+    app.get('/all-parcels', async (req, res) => {
+      const result = await parcelCollection.find().toArray();
+      res.send(result)
+    })
+
+    // get all delivery man for admin 
+    app.get('/all-delivery-man', async (req, res) => {
+      const result = await usersCollection.find({ role: 'delivery-man' }).toArray();
+      res.send(result)
+    })
+
     // get all parcels based on user email 
-    app.get('/my-parcels', async (req, res) => {
-      const userEmail = req.query.email;
-      const result = await parcelCollection.find({ email: userEmail}).toArray();
+    app.get('/my-parcels/:email', async (req, res) => {
+      const userEmail = req.params.email;
+      const filterStatus = req.query.status;
+      const query = { email: userEmail};
+
+      if(filterStatus){
+        query.status = filterStatus
+      }
+
+      const result = await parcelCollection.find(query).toArray();
       res.send(result)
     })
 
@@ -86,7 +125,7 @@ async function run() {
     })
 
     // update a single percel data 
-    app.put('/update/:id', async (req, res) => {
+    app.patch('/update/:id', async (req, res) => {
       const parcelId = req.params.id;
       const changes = req.body;
       const query = { _id : new ObjectId(parcelId)}
