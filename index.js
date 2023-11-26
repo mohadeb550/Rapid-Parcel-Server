@@ -113,6 +113,86 @@ async function run() {
       res.send(result)
     })
 
+
+
+    // get all parcels based on the delivery man email 
+    app.get('/my-delivery-list/:email', async (req, res) => {
+      const userEmail = req.params.email;
+
+      const result = await usersCollection.aggregate([
+        {
+          $match : { email: userEmail }
+        },
+        {
+          $addFields: {
+            convertedId: { $convert: { input: "$_id", to: "string" } },
+          }
+        },
+        {
+          $lookup : {
+            from : 'parcels',
+            localField: 'convertedId',
+            foreignField: 'delivery_man_id',
+            as : 'my_parcels'
+          }
+        },
+        {
+          $project : {
+            _id: 0,
+            my_parcels: 1
+          }
+        },
+       
+      ]).toArray();
+      res.send(result)
+    })
+
+
+
+    // statistics for admin route 
+    app.get('/statistics', async (req, res) => {
+      const result = await parcelCollection.aggregate([
+
+        {
+          $group : {
+            _id : '$booking_date',
+            totalBooking : { $sum : 1}
+          }
+        },
+        {
+          $sort: {
+            totalBooking: -1
+          }
+        },
+        {
+          $project :{
+            _id: 0,
+            date: '$_id',
+            totalBooking: 1
+          }
+        }
+
+      ]).toArray()
+      
+      const bookingByDate = [];
+       result.forEach(item => {
+        bookingByDate.push([item.date, item.totalBooking])
+       })
+       bookingByDate.unshift([ 'Date', 'Booking'])
+       res.send(bookingByDate)
+    })
+
+
+
+    // get insights for home page 
+    app.get('/insights', async (req, res) => {
+
+      const totalBookedParcels = await parcelCollection.estimatedDocumentCount();
+      const totalDeliveredParcels = (await parcelCollection.find({ status : 'delivered'}).toArray()).length;
+      const totalUsers = await usersCollection.estimatedDocumentCount();
+      res.send({ totalBookedParcels, totalDeliveredParcels, totalUsers})
+    })
+
     // get all parcels based on user email 
     app.get('/my-parcels/:email', async (req, res) => {
       const userEmail = req.params.email;
