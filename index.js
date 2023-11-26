@@ -222,9 +222,7 @@ async function run() {
       const query = { _id : new ObjectId(parcelId)}
 
       const updatedDoc = {
-        $set : {
-          ...changes
-        }
+        $set : {...changes }
       }
       const result = await parcelCollection.updateOne(query, updatedDoc);
       res.send(result);
@@ -239,6 +237,38 @@ async function run() {
       }
       const options = { upsert: true}
       const result = await reviewCollection.updateOne({ email: newReview.email}, updatedDoc, options)
+      res.send(result)
+    })
+
+    // get reviews based on user email 
+    app.get('/my-reviews/:email', async (req, res) => {
+      const userEmail = req.params.email;
+      const result = await usersCollection.aggregate([
+        {
+          $match : {
+            email: userEmail
+          }
+        },
+        {
+          $addFields: {
+            convertedId: { $convert: { input: "$_id", to: "string" } },
+          }
+        },
+        {
+          $lookup : {
+            from : 'reviews',
+            localField: 'convertedId',
+            foreignField: 'deliveryManId',
+            as : 'my_reviews'
+          }
+        },
+        {
+          $project :{
+            _id: 0,
+            my_reviews: 1
+          }
+        }
+      ]).toArray()
       res.send(result)
     })
 
