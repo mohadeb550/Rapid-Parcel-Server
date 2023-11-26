@@ -43,6 +43,7 @@ async function run() {
 
   const usersCollection = client.db('rapidParcel').collection('users');
   const parcelCollection = client.db('rapidParcel').collection('parcels');
+  const reviewCollection = client.db('rapidParcel').collection('reviews');
 
     // save userInfo 
     app.post('/users', async (req, res) => {
@@ -227,6 +228,18 @@ async function run() {
       }
       const result = await parcelCollection.updateOne(query, updatedDoc);
       res.send(result);
+    })
+
+    // save a user review 
+    app.put('/save-review', async (req, res) => {
+      const newReview = req.body;
+
+      const updatedDoc = {
+        $set : {...newReview}
+      }
+      const options = { upsert: true}
+      const result = await reviewCollection.updateOne({ email: newReview.email}, updatedDoc, options)
+      res.send(result)
     })
 
     // Send a ping to confirm a successful connection
