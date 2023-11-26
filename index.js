@@ -65,7 +65,7 @@ async function run() {
 
     // update single user info 
     app.patch('/users/:email', async (req, res) => {
-      const userEmail = req.params.id;
+      const userEmail = req.params.email;
       const changes = req.body;
       const query = { email : userEmail}
 
@@ -95,6 +95,16 @@ async function run() {
     app.get('/all-parcels', async (req, res) => {
       const result = await parcelCollection.find().toArray();
       res.send(result)
+    })
+
+    // get all registered user
+    app.get('/all-users', async (req, res) => {
+      const skip = parseInt(req.query.skip)
+      const limit = parseInt(req.query.limit)
+
+      const totalUsers = await usersCollection.estimatedDocumentCount();
+      const result = await usersCollection.find().skip(skip).limit(limit).toArray();
+      res.send({ allUsers: result, totalUsers})
     })
 
     // get all delivery man for admin 
