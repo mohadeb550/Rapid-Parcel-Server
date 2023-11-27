@@ -19,6 +19,32 @@ app.use(cookieParser())
 
 
 // custom middleware
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token;
+  if(!token){
+    return res.status(401).send({ message: 'Unauthorized access'})
+  }
+  if(token){
+    jwt.verify(token, process.env.TOKEN_SECRET, (error, decode) => {
+      if(error){
+        return res.status(401).send({message : 'Unauthorized access'})
+      }
+      req.user = decode;
+      next();
+    })
+  }
+}
+
+const checkSameUser = (req, res, next ) => {
+  const requestedUserEmail = req.params.email;
+  const tokenDecodedEmail = req.user.email;
+
+  if(requestedUserEmail !== tokenDecodedEmail){
+    return res.status(403).send({message : 'Forbidden bad request'})
+  }else{
+    next();
+  }
+}
 
 
 
@@ -44,6 +70,39 @@ async function run() {
   const usersCollection = client.db('rapidParcel').collection('users');
   const parcelCollection = client.db('rapidParcel').collection('parcels');
   const reviewCollection = client.db('rapidParcel').collection('reviews');
+
+
+  
+ // generate jwt token for user
+ app.post('/jwt', async (req, res) => {
+
+  const userEmail = req.body;
+  const token = jwt.sign(userEmail, process.env.TOKEN_SECRET, {expiresIn : '1h'})
+ res.cookie( 'token', token, { httpOnly: true , secure: true, sameSite:'none'})
+ .send({success : true})
+})
+
+// clear client side cookie
+app.get('/logout', async (req, res) => {
+  res.clearCookie('token', {maxAge: '0'})
+  .send({success : true})
+})
+
+    // verify admin middleware
+    // use verify admin after verifyToken
+    const verifyAdmin = async (req, res, next) => {
+      const userTokenEmail = req.user.email;
+      const query = { email : userTokenEmail};
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user.role === 'admin';
+      if(!isAdmin){
+        return res.status(403).send( {message: 'Forbidden'})
+      }else{
+        next();
+      }
+    }
+    
+
 
     // save userInfo 
     app.post('/users', async (req, res) => {
@@ -96,7 +155,7 @@ async function run() {
     })
 
     // check user role and send 
-    app.get('/user-role/:email', async (req, res) => {
+    app.get('/user-role/:email', verifyToken,  async (req, res) => {
       const userEmail = req.params.email;
 
       const result = await usersCollection.findOne({ email: userEmail});
@@ -111,7 +170,7 @@ async function run() {
     })
 
     // get all parcels for admin 
-    app.get('/all-parcels', async (req, res) => {
+    app.get('/all-parcels', verifyToken, verifyAdmin,   async (req, res) => {
       const startDateString = req.query.start;
       const endDateString = req.query.end;
 
@@ -146,7 +205,7 @@ async function run() {
     })
 
     // get all registered user
-    app.get('/all-users', async (req, res) => {
+    app.get('/all-users', verifyToken, verifyAdmin,   async (req, res) => {
       const skip = parseInt(req.query.skip) || 0
       const limit = parseInt(req.query.limit) || 5
 
@@ -185,7 +244,7 @@ async function run() {
     })
 
     // get all delivery man for admin / use top 5 delivery man section
-    app.get('/all-delivery-man', async (req, res) => {
+    app.get('/all-delivery-man', verifyToken, verifyAdmin,  async (req, res) => {
 
       const secure = false;
 
@@ -238,7 +297,7 @@ async function run() {
 
 
     // get all parcels based on the delivery man email 
-    app.get('/my-delivery-list/:email', async (req, res) => {
+    app.get('/my-delivery-list/:email', verifyToken, checkSameUser,  async (req, res) => {
       const userEmail = req.params.email;
 
       const result = await usersCollection.aggregate([
@@ -272,7 +331,7 @@ async function run() {
 
 
     // statistics for admin route 
-    app.get('/statistics', async (req, res) => {
+    app.get('/statistics', verifyToken, verifyAdmin,  async (req, res) => {
       const result = await parcelCollection.aggregate([
 
         {
@@ -316,7 +375,7 @@ async function run() {
     })
 
     // get all parcels based on user email 
-    app.get('/my-parcels/:email', async (req, res) => {
+    app.get('/my-parcels/:email', verifyToken, checkSameUser,  async (req, res) => {
       const userEmail = req.params.email;
       const filterStatus = req.query.status;
       const query = { email: userEmail};
