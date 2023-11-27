@@ -77,6 +77,24 @@ async function run() {
       res.send(result);
     })
 
+    // update totalDelivered parcel for delivery man 
+    app.patch('/update-total-delivered/:email', async (req, res ) => {
+      const deliveryManEmail = req.params.email;
+      const userInfo = await usersCollection.findOne({ email: deliveryManEmail});
+      console.log(userInfo)
+      if(userInfo.total_delivered){
+        const totalDelivery = parseInt(userInfo.total_delivered) + 1 ;
+        const updateDoc = { $set : { total_delivered : totalDelivery}}
+        const result  = await usersCollection.updateOne({ email : deliveryManEmail},updateDoc)
+        res.send(result);
+      }
+      else{
+        const updateDoc = { $set : { total_delivered: 1}};
+        const result  = await usersCollection.updateOne({ email: deliveryManEmail}, updateDoc);
+        res.send(result);
+      }
+    })
+
     // check user role and send 
     app.get('/user-role/:email', async (req, res) => {
       const userEmail = req.params.email;
@@ -166,25 +184,14 @@ async function run() {
       res.send({ totalUsers, allUsers : result })
     })
 
-    // get all delivery man for admin 
+    // get all delivery man for admin / use top 5 delivery man section
     app.get('/all-delivery-man', async (req, res) => {
-      const result = await usersCollection.find({ role: 'delivery-man' }).toArray();
-      // const result = await reviewCollection.aggregate([
-      //   {
-      //     $group : {
-      //         _id : '$delivery-man-id',
-      //         manId : {  '$delivery-man-id'}
-      //     }
-      //   }
-      // ]).toArray();
-      res.send(result)
-    })
 
-    // get top 5 delivery man by their delivered parcel and rating 
-    app.get('/top-delivery-man', async (req, res) => {
+      const secure = false;
+
       const result = await usersCollection.aggregate([
         {
-          $match : {
+          $match : { 
             role : 'delivery-man'
           }
         },
@@ -200,12 +207,34 @@ async function run() {
             foreignField: 'deliveryManId',
             as : 'my_review'
           }
+        },
+        {
+          $unwind : '$my_review'
+        },
+        {
+          $group : {
+            _id : '$_id',
+            name: { $first: "$name" },
+            email: {$first: '$email'},
+            image: {$first: '$image'},
+            phone: {$first: '$phone'},
+            total_delivered : {$first: '$total_delivered'},
+            totalReviews: {$sum : 1},
+            avg_review : {$avg : '$my_review.rating'}
+          }
+        },
+        {
+          $sort: {
+            total_delivered: -1,
+            avg_review: -1
+          }
         }
-       
-
+        
       ]).toArray();
       res.send(result)
     })
+ 
+  
 
 
     // get all parcels based on the delivery man email 
