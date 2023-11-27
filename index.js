@@ -94,26 +94,118 @@ async function run() {
 
     // get all parcels for admin 
     app.get('/all-parcels', async (req, res) => {
-      const result = await parcelCollection.find().toArray();
+      const startDateString = req.query.start;
+      const endDateString = req.query.end;
+
+    const startDateObj = new Date(startDateString);
+    const endDateObj = new Date(endDateString);
+
+  const result = await parcelCollection.aggregate([
+  {
+    $addFields: {
+      // Convert the req_date field to a Date object
+      converted_req_date: {
+        $toDate: "$req_date"
+      }
+    }
+  },
+  {
+    $match: {
+      converted_req_date: {
+        $gte: startDateObj,
+        $lte: endDateObj
+      }
+    }
+  },
+  {
+    $sort: {
+      converted_req_date: -1 
+    }
+  }
+]).toArray();
+
       res.send(result)
     })
 
     // get all registered user
     app.get('/all-users', async (req, res) => {
-      const skip = parseInt(req.query.skip)
-      const limit = parseInt(req.query.limit)
+      const skip = parseInt(req.query.skip) || 0
+      const limit = parseInt(req.query.limit) || 5
 
       const totalUsers = await usersCollection.estimatedDocumentCount();
-      const result = await usersCollection.find().skip(skip).limit(limit).toArray();
-      res.send({ allUsers: result, totalUsers})
+      // const result = await usersCollection.find().skip(skip).limit(limit).toArray();
+
+      const result = await usersCollection.aggregate([
+        {
+          $addFields: {
+            users: {$sum : 1},
+          }
+        },
+        {
+          $lookup : {
+            from : 'parcels',
+            localField: 'email',
+            foreignField: 'email',
+            as : 'my_parcels'}
+        },
+        {
+          $addFields: {
+            totalBooking: {$size : '$my_parcels'},
+          }
+        },
+        { 
+          $skip: skip 
+        },
+        {
+           $limit: limit 
+        }
+      ]).toArray();
+
+
+      
+      res.send({ totalUsers, allUsers : result })
     })
 
     // get all delivery man for admin 
     app.get('/all-delivery-man', async (req, res) => {
       const result = await usersCollection.find({ role: 'delivery-man' }).toArray();
+      // const result = await reviewCollection.aggregate([
+      //   {
+      //     $group : {
+      //         _id : '$delivery-man-id',
+      //         manId : {  '$delivery-man-id'}
+      //     }
+      //   }
+      // ]).toArray();
       res.send(result)
     })
 
+    // get top 5 delivery man by their delivered parcel and rating 
+    app.get('/top-delivery-man', async (req, res) => {
+      const result = await usersCollection.aggregate([
+        {
+          $match : {
+            role : 'delivery-man'
+          }
+        },
+        {
+          $addFields: {
+            convertedId: { $convert: { input: "$_id", to: "string" } },
+          }
+        },
+        {
+          $lookup : {
+            from : 'reviews',
+            localField: 'convertedId',
+            foreignField: 'deliveryManId',
+            as : 'my_review'
+          }
+        }
+       
+
+      ]).toArray();
+      res.send(result)
+    })
 
 
     // get all parcels based on the delivery man email 
