@@ -6,12 +6,13 @@ const port = process.env.PORT || 5000;
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
 
 // use middleWare 
 
 app.use(cors({
-  origin:['http://localhost:5173'],
+  origin:['http://localhost:5174'],
   credentials: true
 }));
 app.use(express.json())
@@ -70,8 +71,32 @@ async function run() {
   const usersCollection = client.db('rapidParcel').collection('users');
   const parcelCollection = client.db('rapidParcel').collection('parcels');
   const reviewCollection = client.db('rapidParcel').collection('reviews');
+  const paymentCollection = client.db('rapidParcel').collection('payments');
 
 
+    // payment related api 
+    // payment intent 
+    app.post('/create-payment-intent', async (req,res)=> {
+      const { totalPrice , currency } = req.body;
+      const totalAmount = parseInt( totalPrice * 100)
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: totalAmount,
+        currency,
+      })
+      const clientSecret = paymentIntent.client_secret;
+      res.send(clientSecret)
+    })
+
+
+    // save payment history 
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      res.send(result)
+    })
+
+// mohadebMapGL$0
   
  // generate jwt token for user
  app.post('/jwt', async (req, res) => {
@@ -244,9 +269,8 @@ app.get('/logout', async (req, res) => {
     })
 
     // get all delivery man for admin / use top 5 delivery man section
-    app.get('/all-delivery-man', verifyToken, verifyAdmin,  async (req, res) => {
+    app.get('/all-delivery-man',  async (req, res) => {
 
-      const secure = false;
 
       const result = await usersCollection.aggregate([
         {
@@ -411,12 +435,12 @@ app.get('/logout', async (req, res) => {
     // save a user review 
     app.put('/save-review', async (req, res) => {
       const newReview = req.body;
-
+      
       const updatedDoc = {
         $set : {...newReview}
       }
       const options = { upsert: true}
-      const result = await reviewCollection.updateOne({ email: newReview.email}, updatedDoc, options)
+      const result = await reviewCollection.updateOne({ deliveryManId: newReview.deliveryManId ,  email: newReview.email}, updatedDoc, options)
       res.send(result)
     })
 
