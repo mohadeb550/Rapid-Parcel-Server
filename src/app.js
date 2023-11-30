@@ -46,12 +46,14 @@ app.use((err, req, res, next)=> {
 })
 
 
-const main =  async () => {
-   await connectDB();
+// const main =  async () => {
+//    await connectDB();
 
-   app.listen(port, ()=>{
-    console.log('Server running on port', port)   
-})
-}
+//    app.listen(port, ()=>{
+//     console.log('Server running on port', port)   
+// })
+// }
 
-main();
+// main();
+
+module.exports = app;
