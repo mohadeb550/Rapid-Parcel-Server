@@ -2,7 +2,7 @@
 const Users = require('../../../models/Users')
 
 
-const getAllDeliveryMan = async (req, res) => {
+const getTopDeliveryMan = async (req, res) => {
 
 
     const result = await Users.aggregate([
@@ -25,19 +25,8 @@ const getAllDeliveryMan = async (req, res) => {
         }
       },
       {
-        $addFields: {
-          totalReviews: { $size: "$my_review" },
-        }
+        $unwind : '$my_review'
       },
-      {
-        $unwind: {
-          path: "$my_review",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      // {
-      //   $unwind : '$my_review'
-      // },
       {
         $group : {
           _id : '$_id',
@@ -46,7 +35,7 @@ const getAllDeliveryMan = async (req, res) => {
           image: {$first: '$image'},
           phone: {$first: '$phone'},
           total_delivered : {$first: '$total_delivered'},
-          totalReviews: {$first: '$totalReviews'},
+          totalReviews: {$sum : 1},
           avg_review_float : {$avg : '$my_review.rating'}
         }
       },
@@ -61,8 +50,9 @@ const getAllDeliveryMan = async (req, res) => {
           avg_review: { $round: ["$avg_review_float", 1]  }
         }
       }
+      
     ])
     res.send(result)
   }
 
-  module.exports = getAllDeliveryMan;
+  module.exports = getTopDeliveryMan;

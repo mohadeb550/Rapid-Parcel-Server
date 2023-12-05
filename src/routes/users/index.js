@@ -5,6 +5,7 @@ const saveUserInfo = require('../../api/users/controllers/saveUserInfo')
 const getSingleUser = require('../../api/users/controllers/getSingleUser')
 const getAllUsers = require('../../api/users/controllers/getAllUsers')
 const updateUserInfo = require('../../api/users/controllers/updateUserInfo')
+const getTopDeliveryMan = require('../../api/users/controllers/getTopDeliveryMan')
 const getAllDeliveryMan = require('../../api/users/controllers/getAllDeliveryMan')
 const updateTotalDelivery = require('../../api/users/controllers/updateTotalDelivery')
 const verifyToken = require('../../middlewares/verifyToken')
@@ -32,6 +33,8 @@ router.get('/all-users', verifyToken, verifyAdmin, getAllUsers )
 
 
     // get all delivery man for admin / use top 5 delivery man section
+ router.get('/top-delivery-man', getTopDeliveryMan  )
+
  router.get('/all-delivery-man', getAllDeliveryMan  )
 
  
