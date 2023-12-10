@@ -11,6 +11,7 @@ require('dotenv').config()
  const usersRoutes = require('./routes/users/index')
  const statisticsRoutes = require('./routes/statistics/index')
  const reviewsRoutes = require('./routes/reviews/index')
+ const notificationRoutes = require('./routes/notification/index')
 
 
 
@@ -25,6 +26,7 @@ app.use(parcelsRoutes)
 app.use(usersRoutes)
 app.use(statisticsRoutes)
 app.use(reviewsRoutes)
+app.use(notificationRoutes)
 
 
 
