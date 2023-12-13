@@ -1,9 +1,22 @@
 const express = require('express');
 const applyMiddleware = require('./middlewares/applyMiddleware')
-const connectDB = require('./db/connectDb')
 const app = express();
 const port = process.env.PORT || 5000;
 require('dotenv').config()
+
+const server = require("http").createServer(app);
+
+const io = require("socket.io")(server, {
+    cors: {
+      origin: "http://localhost:5173",
+      methods: ["GET", "POST"]
+    }
+  });
+
+
+global.io = io;
+
+
 
  const authRoutes =  require('../src/routes/authentication/index');
  const paymentRoutes = require('./routes/payment/index')
@@ -58,4 +71,5 @@ app.use((err, req, res, next)=> {
 
 // main();
 
-module.exports = app;
+// module.exports = app;
+module.exports = server;

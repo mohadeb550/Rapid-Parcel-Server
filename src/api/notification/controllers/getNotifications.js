@@ -9,6 +9,19 @@ const getNotifications = async (req, res) => {
             $match : {
                 receiverEmail: userEmail
             }
+        },
+        {
+            $addFields: {
+              // Convert the string date field to a Date object
+              converted_date: {
+                $toDate: "$date"
+              }
+            }
+        },
+        {
+            $sort: {
+              converted_date: -1 
+            }
         }
     ])
     res.send(result);
