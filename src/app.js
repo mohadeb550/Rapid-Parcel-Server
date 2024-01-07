@@ -1,11 +1,12 @@
 const express = require('express');
+
 const applyMiddleware = require('./middlewares/applyMiddleware')
 const app = express();
-const port = process.env.PORT || 5000;
 require('dotenv').config()
 
-const server = require("http").createServer(app);
+// socket connection 
 
+const server = require("http").createServer(app);
 const io = require("socket.io")(server, {
     cors: {
       origin: "http://localhost:5173",

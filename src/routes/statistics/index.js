@@ -5,12 +5,16 @@ const verifyToken = require('../../middlewares/verifyToken')
 
 const getInsights = require('../../api/statistics/controllers/getInsights')
 const getStatistics = require('../../api/statistics/controllers/getStatistics')
+const getParcelsAnalytics = require('../../api/statistics/controllers/getParcelsAnalytics')
 
 
 // get insights for home page 
     router.get('/insights', getInsights )
 
-    // statistics for admin route 
-    router.get('/statistics', verifyToken, verifyAdmin, getStatistics )
+    // booking by date analytics for admin route 
+    router.get('/booking-by-date', verifyToken, verifyAdmin, getStatistics )
+
+    // get parcels analytics for admin 
+    router.get('/parcels-analytics', verifyToken, verifyAdmin, getParcelsAnalytics)
 
 module.exports = router;

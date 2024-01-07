@@ -3,13 +3,19 @@
 const socket = () => {
 
     io.on('connection', socket => {
-       
-        socket.on('userMessage', (message) => {
-            socket.emit('sendToAdmin', message)
-            console.log(message)
+
+        socket.on('userMessage', (userMessages) => {
+            console.log(userMessages)
+            io.emit('sendToAdmin', userMessages)
         })
 
-        // socket.emit('message', 'Hello from the server!');
+        socket.on('adminMessage', (adminMessages)=> {
+            console.log(adminMessages)
+            io.emit('sendToUser', adminMessages)
+        })
+
+        io.emit('message', 'Hello from the server');
+
       });
 };
 
