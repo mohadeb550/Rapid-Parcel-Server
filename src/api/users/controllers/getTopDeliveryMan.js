@@ -34,9 +34,9 @@ const getTopDeliveryMan = async (req, res) => {
           email: {$first: '$email'},
           image: {$first: '$image'},
           phone: {$first: '$phone'},
-          total_delivered : {$first: '$total_delivered'},
+          total_delivered : {$first: { $toInt: "$total_delivered" }},
           totalReviews: {$sum : 1},
-          avg_review_float : {$avg : '$my_review.rating'}
+          avg_review_float : {$avg : '$my_review.rating'},
         }
       },
       {
