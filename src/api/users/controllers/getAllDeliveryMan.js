@@ -35,9 +35,6 @@ const getAllDeliveryMan = async (req, res) => {
           preserveNullAndEmptyArrays: true
         }
       },
-      // {
-      //   $unwind : '$my_review'
-      // },
       {
         $group : {
           _id : '$_id',
@@ -45,7 +42,7 @@ const getAllDeliveryMan = async (req, res) => {
           email: {$first: '$email'},
           image: {$first: '$image'},
           phone: {$first: '$phone'},
-          total_delivered : {$first: '$total_delivered'},
+          total_delivered : {$first: { $toInt: "$total_delivered" }},
           totalReviews: {$first: '$totalReviews'},
           avg_review_float : {$avg : '$my_review.rating'}
         }

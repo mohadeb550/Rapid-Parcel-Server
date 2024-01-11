@@ -16,6 +16,10 @@ const PaymentSchema = new Schema({
     date : {
         type : String,
         required: true
+    },
+    parcelId : {
+        type : String,
+        required: true
     }
 })
 
