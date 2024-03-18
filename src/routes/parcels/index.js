@@ -8,7 +8,8 @@ const getAllParcelDeliveryMan = require('../../api/parcels/controllers/getAllPar
 const insertParcel = require('../../api/parcels/controllers/insertParcel')
 const getSingleParcel = require('../../api/parcels/controllers/getSingleParcel')
 const updateSingleParcel = require('../../api/parcels/controllers/updateSingleParcel')
-const getAllParcelUser = require('../../api/parcels/controllers/getAllParcelUser')
+const getAllParcelUser = require('../../api/parcels/controllers/getAllParcelUser');
+const getSearchParcels = require('../../api/parcels/controllers/getSearchParcels');
 
 
    // get a single percel data 
@@ -31,6 +32,9 @@ router.post('/booking', insertParcel )
 
     // get all parcels based on the delivery man email 
 router.get('/my-delivery-list/:email', verifyToken, checkSameUser, getAllParcelDeliveryMan )
+
+//  get all percels title list 
+router.get('/get-search-parcels', verifyToken, getSearchParcels)
 
 
 
